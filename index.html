@@ -336,15 +336,6 @@
     font-weight:500;
     box-shadow:0 2px 8px rgba(0,0,0,.12);
   }
-  /* Live weather pill, mirrored into the opposite corner. Must come after
-     .map .cap — equal specificity, and this element carries both classes. */
-  .map .wx{
-    left:auto;
-    bottom:auto;
-    right:1rem;
-    top:1rem;
-    font-variant-numeric:tabular-nums;
-  }
 
   /* ---------------- lists ---------------- */
 
@@ -441,7 +432,6 @@
         <circle cx="100" cy="150" r="9" fill="#e8608f" stroke="#fff" stroke-width="3"/>
       </svg>
       <span class="cap">📍 Gift City, IN</span>
-      <span class="cap wx" id="wx" hidden></span>
     </div>
 
     <!-- research focus -->
@@ -745,49 +735,6 @@
         wrap.style.transform = '';
       }
     }, {passive:true});
-  })();
-
-  // ---- live weather for GIFT City ----
-  (function(){
-    var el = document.getElementById('wx');
-    if(!el || !window.fetch) return;
-
-    // WMO codes -> a single glyph
-    function glyph(code, isDay){
-      if(code === 0)                    return isDay ? '☀️' : '🌙';
-      if(code === 1 || code === 2)      return isDay ? '🌤️' : '☁️';
-      if(code === 3)                    return '☁️';
-      if(code === 45 || code === 48)    return '🌫️';
-      if(code >= 51 && code <= 57)      return '🌦️';
-      if(code >= 61 && code <= 67)      return '🌧️';
-      if(code >= 71 && code <= 77)      return '🌨️';
-      if(code >= 80 && code <= 82)      return '🌦️';
-      if(code === 85 || code === 86)    return '🌨️';
-      if(code >= 95)                    return '⛈️';
-      return '🌡️';
-    }
-
-    // Open-Meteo: no key, CORS-enabled, so it can be called straight from here
-    var url = 'https://api.open-meteo.com/v1/forecast'
-            + '?latitude=23.1629&longitude=72.6887'
-            + '&current=temperature_2m,weather_code,is_day'
-            + '&timezone=Asia%2FKolkata';
-
-    fetch(url, {mode:'cors'})
-      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function(d){
-        var c = d && d.current;
-        if(!c || typeof c.temperature_2m !== 'number') throw new Error('shape');
-        var t = Math.round(c.temperature_2m);
-        el.textContent = glyph(c.weather_code, c.is_day === 1) + ' ' + t + '°C';
-        el.setAttribute('title', 'Current temperature in GIFT City');
-        el.hidden = false;
-      })
-      .catch(function(){
-        // Decorative only — if the API is unreachable the card simply
-        // stays exactly as it is, with no error state shown.
-        el.hidden = true;
-      });
   })();
 
   document.getElementById('yr').textContent = new Date().getFullYear();
