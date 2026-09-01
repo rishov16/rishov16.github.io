@@ -102,26 +102,35 @@
     margin-bottom:1.25rem;
   }
   .nav-contact{justify-self:end;}
-  /* solid play button — ink disc, light glyph */
+  /* play disc + label; the whole row is the click target */
   .say{
-    width:44px;height:44px;
+    display:inline-flex;
+    align-items:center;
+    gap:.65rem;
     padding:0;
     border:0;
+    background:none;
+    font-family:inherit;
+    color:var(--ink);
+    cursor:pointer;
+    justify-self:start;
+  }
+  .say-ico{
+    width:44px;height:44px;
+    flex:none;
     border-radius:50%;
     background:var(--ink);
     color:var(--bg);
     display:grid;
     place-items:center;
-    cursor:pointer;
-    justify-self:start;
     box-shadow:0 2px 5px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.16);
     transition:transform .2s ease, box-shadow .2s ease;
   }
-  .say:hover{
+  .say:hover .say-ico{
     transform:scale(1.07);
     box-shadow:0 3px 8px rgba(0,0,0,.22), 0 12px 28px rgba(0,0,0,.2);
   }
-  .say:active{transform:scale(.97);}
+  .say:active .say-ico{transform:scale(.97);}
   .say svg{
     width:15px;height:15px;
     fill:currentColor;
@@ -129,14 +138,22 @@
     /* a triangle looks off-centre when centred geometrically */
     margin-left:2px;
   }
-  .say.speaking{animation:say-pulse 1s ease-in-out infinite;}
+  .say-txt{
+    font-size:.85rem;
+    font-weight:500;
+    color:var(--muted);
+    white-space:nowrap;
+    transition:color .2s ease;
+  }
+  .say:hover .say-txt{color:var(--ink);}
+  .say.speaking .say-ico{animation:say-pulse 1s ease-in-out infinite;}
   @keyframes say-pulse{
     0%,100%{transform:scale(1);}
     50%    {transform:scale(1.09);}
   }
   @media (prefers-reduced-motion:reduce){
-    .say{transition:none;}
-    .say.speaking{animation:none;}
+    .say-ico{transition:none;}
+    .say.speaking .say-ico{animation:none;}
   }
 
   .pills{
@@ -435,10 +452,13 @@
 <body>
 
 <nav>
-  <button class="say" id="sayBtn" type="button" title="Hear my name" aria-label="Hear how Rishov Mondal is pronounced">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7.5 4.8v14.4L19.2 12 7.5 4.8Z"/>
-    </svg>
+  <button class="say" id="sayBtn" type="button" aria-label="Say my name — hear how Rishov Mondal is pronounced">
+    <span class="say-ico">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7.5 4.8v14.4L19.2 12 7.5 4.8Z"/>
+      </svg>
+    </span>
+    <span class="say-txt" id="sayTxt">Say my name</span>
   </button>
   <div class="pills" role="group" aria-label="Filter cards">
     <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
@@ -813,10 +833,14 @@
     // Chrome populates voices asynchronously
     window.speechSynthesis.onvoiceschanged = pickVoice;
 
+    var txt = document.getElementById('sayTxt');
+    var IDLE_LABEL = txt ? txt.textContent : '';
     var resetTimer = null;
+
     function stop(){
       clearTimeout(resetTimer);
       btn.classList.remove('speaking');
+      if(txt) txt.textContent = IDLE_LABEL;
     }
 
     btn.addEventListener('click', function(){
@@ -829,6 +853,7 @@
       u.rate = 0.85;
 
       btn.classList.add('speaking');
+      if(txt) txt.textContent = 'Rishov Mondal';
       u.onend = stop;
       u.onerror = stop;
       // onend is unreliable across browsers, so guarantee the reset
