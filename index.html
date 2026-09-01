@@ -33,9 +33,9 @@
   }
 
   .page{
-    max-width:920px;
+    max-width:1360px;
     margin:0 auto;
-    padding:2.4rem 1.75rem 5rem;
+    padding:2.4rem clamp(1.75rem, 6vw, 5rem) 6rem;
   }
 
   /* ---------- masthead ---------- */
@@ -129,7 +129,7 @@
   /* ---------- sections ---------- */
   section.block{
     display:grid;
-    grid-template-columns:78px 1fr;
+    grid-template-columns:clamp(78px, 9vw, 130px) 1fr;
     gap:1.5rem;
     padding:2.6rem 0;
     border-top:1px solid var(--line);
