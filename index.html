@@ -105,21 +105,8 @@
     font-weight:700;
     font-size:1.6rem;
     letter-spacing:-.02em;
-    color:var(--pink-deep);          /* fallback if background-clip:text is unsupported */
+    color:var(--ink);
     width:fit-content;
-  }
-  @supports ((-webkit-background-clip:text) or (background-clip:text)){
-    .logo{
-      background-image:linear-gradient(95deg,
-        var(--pink-deep) 0%,
-        #f2994a 34%,
-        var(--blue-deep) 68%,
-        var(--mint-deep) 100%);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-      -webkit-text-fill-color:transparent;
-    }
   }
 
   .pills{
