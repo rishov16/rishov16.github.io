@@ -87,6 +87,18 @@
     padding:.3rem;
     border-radius:999px;
     box-shadow:var(--shadow);
+    position:relative;
+  }
+  /* the active marker is one element that slides between pills */
+  .pill-ind{
+    position:absolute;
+    top:.3rem;
+    left:0;
+    height:calc(100% - .6rem);
+    background:var(--ink);
+    border-radius:999px;
+    z-index:0;
+    transition:transform .38s cubic-bezier(.2,.7,.3,1), width .38s cubic-bezier(.2,.7,.3,1);
   }
   .pill{
     border:0;
@@ -98,13 +110,17 @@
     padding:.45rem .95rem;
     border-radius:999px;
     cursor:pointer;
-    transition:background .2s ease,color .2s ease;
+    transition:color .25s ease;
     white-space:nowrap;
+    position:relative;
+    z-index:1;
   }
   .pill:hover{color:var(--ink);}
   .pill[aria-pressed="true"]{
-    background:var(--ink);
     color:var(--bg);
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pill-ind{transition:none;}
   }
   .nav-contact{
     font-size:.85rem;
@@ -282,12 +298,19 @@
     font-family:inherit;
     align-items:center;
     justify-content:center;
-    gap:.5rem;
     background:var(--card);
     color:var(--ink);
   }
-  .toggle .moon{font-size:1.5rem;line-height:1;}
-  .toggle .tlabel{font-size:.76rem;color:var(--muted);margin-top:.5rem;}
+  .toggle .icon{
+    width:34px;height:34px;
+    fill:currentColor;
+    transition:transform .35s cubic-bezier(.2,.7,.3,1);
+  }
+  .toggle:hover .icon{transform:rotate(-12deg) scale(1.06);}
+  /* icon follows the theme, so the swap needs no JS */
+  .toggle .icon-sun{display:none;}
+  :root[data-theme="dark"] .toggle .icon-moon{display:none;}
+  :root[data-theme="dark"] .toggle .icon-sun{display:block;}
 
   /* ---------------- filtering ---------------- */
   .card.hidden{display:none;}
@@ -324,6 +347,7 @@
   <nav>
     <div class="logo"><span class="a">ri</span><span class="b">sh</span><span class="c">ov</span></div>
     <div class="pills" role="group" aria-label="Filter cards">
+      <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
       <button class="pill" data-filter="all" aria-pressed="true">All</button>
       <button class="pill" data-filter="about" aria-pressed="false">About</button>
       <button class="pill" data-filter="work" aria-pressed="false">Work</button>
@@ -391,8 +415,15 @@
 
     <!-- theme toggle -->
     <button class="card toggle hoverable" id="themeBtn" type="button" data-cat="about" aria-label="Toggle dark mode">
-      <span class="moon" id="themeIcon">🌙</span>
-      <span class="tlabel" id="themeLabel">Dark mode</span>
+      <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.6 13.4A8.6 8.6 0 1 1 10.6 3.4a6.9 6.9 0 0 0 10 10Z"/>
+      </svg>
+      <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.6"/>
+        <g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none">
+          <path d="M12 1.6v2.6M12 19.8v2.6M22.4 12h-2.6M4.2 12H1.6M19.35 4.65l-1.85 1.85M6.5 17.5l-1.85 1.85M19.35 19.35L17.5 17.5M6.5 6.5L4.65 4.65"/>
+        </g>
+      </svg>
     </button>
 
     <!-- education -->
@@ -458,13 +489,10 @@
   // ---- theme ----
   var root = document.documentElement;
   var btn = document.getElementById('themeBtn');
-  var icon = document.getElementById('themeIcon');
-  var tlabel = document.getElementById('themeLabel');
 
   function applyTheme(t){
     root.setAttribute('data-theme', t);
-    icon.textContent = t === 'dark' ? '☀️' : '🌙';
-    tlabel.textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+    btn.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
   }
   var stored = null;
   try { stored = localStorage.getItem('theme'); } catch(e){}
@@ -477,18 +505,141 @@
   });
 
   // ---- filters ----
-  var pills = document.querySelectorAll('.pill');
-  var cards = document.querySelectorAll('.bento .card');
+  var pills = [].slice.call(document.querySelectorAll('.pill'));
+  var cards = [].slice.call(document.querySelectorAll('.bento .card'));
+  var ind = document.getElementById('pillInd');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function moveIndicator(){
+    var active = document.querySelector('.pill[aria-pressed="true"]');
+    if(!active) return;
+    ind.style.width = active.offsetWidth + 'px';
+    ind.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+  }
+
+  function matches(card, f){
+    return f === 'all' || (card.dataset.cat || '').split(' ').indexOf(f) !== -1;
+  }
+
+  // Cards still playing their exit animation. Correctness must never depend
+  // on an animation event alone — a backgrounded tab or a fast second click
+  // can mean onfinish never arrives — so every exit also has a timer, and a
+  // new filter flushes whatever is still in flight.
+  var pendingExits = [];
+
+  function flushExits(){
+    pendingExits.forEach(function(p){
+      try { p.anim.cancel(); } catch(e){}
+      clearTimeout(p.timer);
+      clearExit(p.el);
+    });
+    pendingExits = [];
+  }
+
+  function applyFilter(f){
+    flushExits();
+
+    // FIRST — where every visible card currently sits
+    var first = new Map();
+    cards.forEach(function(c){
+      if(!c.classList.contains('hidden')) first.set(c, c.getBoundingClientRect());
+    });
+
+    var exiting = cards.filter(function(c){
+      return !matches(c, f) && !c.classList.contains('hidden');
+    });
+
+    // Pop the leavers out of flow (fixed at their current spot) so the
+    // survivors can reflow underneath them straight away.
+    exiting.forEach(function(c){
+      var r = first.get(c);
+      c.style.position = 'fixed';
+      c.style.left = r.left + 'px';
+      c.style.top = r.top + 'px';
+      c.style.width = r.width + 'px';
+      c.style.height = r.height + 'px';
+      c.style.margin = '0';
+      c.style.pointerEvents = 'none';
+    });
+
+    cards.forEach(function(c){
+      if(matches(c, f)) c.classList.remove('hidden');
+      else if(exiting.indexOf(c) === -1) c.classList.add('hidden');
+    });
+
+    if(reduce){
+      exiting.forEach(clearExit);
+      return;
+    }
+
+    // LAST — where they land now
+    var last = new Map();
+    cards.forEach(function(c){
+      if(!c.classList.contains('hidden') && exiting.indexOf(c) === -1){
+        last.set(c, c.getBoundingClientRect());
+      }
+    });
+
+    // INVERT + PLAY. Translate only — scaling would smear the text.
+    cards.forEach(function(c){
+      if(exiting.indexOf(c) !== -1) return;
+      var b = last.get(c);
+      if(!b) return;
+      var a = first.get(c);
+      if(a){
+        var dx = a.left - b.left, dy = a.top - b.top;
+        if(Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        c.animate(
+          [{transform:'translate(' + dx + 'px,' + dy + 'px)'}, {transform:'none'}],
+          {duration:420, easing:'cubic-bezier(.2,.7,.3,1)'}
+        );
+      } else {
+        c.animate(
+          [{opacity:0, transform:'scale(.92)'}, {opacity:1, transform:'none'}],
+          {duration:320, easing:'cubic-bezier(.2,.7,.3,1)'}
+        );
+      }
+    });
+
+    exiting.forEach(function(c){
+      var anim = c.animate(
+        [{opacity:1, transform:'scale(1)'}, {opacity:0, transform:'scale(.92)'}],
+        {duration:240, easing:'ease-in'}
+      );
+      var entry = {el:c, anim:anim, timer:null};
+      function done(){
+        clearTimeout(entry.timer);
+        var i = pendingExits.indexOf(entry);
+        if(i !== -1) pendingExits.splice(i, 1);
+        clearExit(c);
+      }
+      entry.timer = setTimeout(done, 400);
+      anim.onfinish = done;
+      anim.oncancel = done;
+      pendingExits.push(entry);
+    });
+  }
+
+  function clearExit(c){
+    c.classList.add('hidden');
+    c.style.position = ''; c.style.left = ''; c.style.top = '';
+    c.style.width = ''; c.style.height = ''; c.style.margin = '';
+    c.style.pointerEvents = '';
+  }
+
   pills.forEach(function(p){
     p.addEventListener('click', function(){
-      var f = p.dataset.filter;
+      if(p.getAttribute('aria-pressed') === 'true') return;
       pills.forEach(function(o){ o.setAttribute('aria-pressed', String(o === p)); });
-      cards.forEach(function(c){
-        var cats = (c.dataset.cat || '').split(' ');
-        c.classList.toggle('hidden', f !== 'all' && cats.indexOf(f) === -1);
-      });
+      moveIndicator();
+      applyFilter(p.dataset.filter);
     });
   });
+
+  moveIndicator();
+  window.addEventListener('resize', moveIndicator);
+  // web fonts change pill widths once they load
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(moveIndicator);
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 </script>
