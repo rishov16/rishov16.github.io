@@ -6,5 +6,5 @@ Static `index.html` — no build step. Edit it and push; Pages rebuilds on its o
 
 ## Credits
 
-The avatar (`avatar.png`) is from [alohe/avatars](https://github.com/alohe/avatars),
-used under the MIT licence.
+The avatar (`avatar.png`) is `memo_26` from
+[alohe/avatars](https://github.com/alohe/avatars), used under the MIT licence.

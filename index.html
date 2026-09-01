@@ -211,27 +211,27 @@
   /* ---------------- intro ---------------- */
   .intro{justify-content:center;}
   .intro-top{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+  /* No plate behind the memoji — it sits directly on the card, so the
+     transparent PNG reads as a floating head rather than a cropped photo. */
   .avatar{
-    width:74px;height:74px;
-    border-radius:50%;
-    background:var(--pink);
+    width:96px;height:96px;
     display:grid;place-items:center;
     font-family:'Fraunces',serif;
     font-weight:700;
     font-size:1.6rem;
     color:var(--pink-deep);
     flex:none;
-    overflow:hidden;
     position:relative;
   }
-  /* The photo covers the RM monogram, which stays underneath as a fallback
-     if the image ever fails to load. */
+  /* The memoji covers the RM monogram, which stays underneath as a fallback
+     if the image ever fails to load. `contain` keeps the whole head in
+     frame — `cover` would clip the hair. */
   .avatar img{
     position:absolute;
     inset:0;
     width:100%;
     height:100%;
-    object-fit:cover;
+    object-fit:contain;
     display:block;
   }
   .intro .blurb{
@@ -381,12 +381,8 @@
     <!-- intro -->
     <div class="card intro x2 y2" data-cat="about">
       <div class="intro-top">
-        <!-- avatar.png: alohe/avatars (memo_30), MIT licence -->
+        <!-- avatar.png: alohe/avatars (memo_26), MIT licence -->
         <div class="avatar">RM<img src="avatar.png" alt="Rishov Mondal" width="384" height="384" onerror="this.remove()"></div>
-        <div>
-          <div class="label">Gift City, Gujarat · India</div>
-          <div class="row-t" style="margin-top:.3rem;font-size:.88rem;color:var(--muted);font-weight:500;">Predoctoral Researcher, IAIRO</div>
-        </div>
       </div>
       <p class="blurb">I'm <span class="nm">Rishov</span>, a mathematician and researcher working on neurosymbolic AI and autoformalization. <span class="dim">I'm interested in formal theorem proving, operations research, stochastic optimization, mathematics olympiads and combat sports.</span></p>
     </div>
