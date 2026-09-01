@@ -102,47 +102,41 @@
     margin-bottom:1.25rem;
   }
   .nav-contact{justify-self:end;}
-  /* minimalist "hear my name" button */
-  /* same circle token as the card arrows: borderless tint that inverts to
-     ink on hover, so it reads as part of that icon family */
+  /* solid play button — ink disc, light glyph */
   .say{
-    width:34px;height:34px;
+    width:44px;height:44px;
     padding:0;
     border:0;
     border-radius:50%;
-    background:rgba(0,0,0,.06);
-    color:var(--ink);
+    background:var(--ink);
+    color:var(--bg);
     display:grid;
     place-items:center;
     cursor:pointer;
     justify-self:start;
-    transition:background .2s ease, color .2s ease, transform .2s ease;
+    box-shadow:0 2px 5px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.16);
+    transition:transform .2s ease, box-shadow .2s ease;
   }
-  :root[data-theme="dark"] .say{background:rgba(255,255,255,.12);}
   .say:hover{
-    background:var(--ink);
-    color:var(--bg);
-    transform:scale(1.06);
+    transform:scale(1.07);
+    box-shadow:0 3px 8px rgba(0,0,0,.22), 0 12px 28px rgba(0,0,0,.2);
   }
+  .say:active{transform:scale(.97);}
   .say svg{
-    width:17px;height:17px;
-    fill:none;
-    stroke:currentColor;
-    stroke-width:2;
-    stroke-linecap:round;
-    stroke-linejoin:round;
+    width:15px;height:15px;
+    fill:currentColor;
+    stroke:none;
+    /* a triangle looks off-centre when centred geometrically */
+    margin-left:2px;
   }
-  .say svg .cone{fill:currentColor;stroke:none;}
-  .say .wave{opacity:.9;transform-origin:8px 12px;}
-  .say.speaking .w1{animation:say-pulse .9s ease-in-out infinite;}
-  .say.speaking .w2{animation:say-pulse .9s ease-in-out .15s infinite;}
+  .say.speaking{animation:say-pulse 1s ease-in-out infinite;}
   @keyframes say-pulse{
-    0%,100%{opacity:.25;}
-    50%    {opacity:1;}
+    0%,100%{transform:scale(1);}
+    50%    {transform:scale(1.09);}
   }
   @media (prefers-reduced-motion:reduce){
     .say{transition:none;}
-    .say.speaking .w1,.say.speaking .w2{animation:none;}
+    .say.speaking{animation:none;}
   }
 
   .pills{
@@ -443,9 +437,7 @@
 <nav>
   <button class="say" id="sayBtn" type="button" title="Hear my name" aria-label="Hear how Rishov Mondal is pronounced">
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path class="cone" d="M11 5 6.5 9H3.5v6h3L11 19V5Z"/>
-      <path class="wave w1" d="M14.8 9.4a3.6 3.6 0 0 1 0 5.2"/>
-      <path class="wave w2" d="M17.6 6.6a7.5 7.5 0 0 1 0 10.8"/>
+      <path d="M7.5 4.8v14.4L19.2 12 7.5 4.8Z"/>
     </svg>
   </button>
   <div class="pills" role="group" aria-label="Filter cards">
