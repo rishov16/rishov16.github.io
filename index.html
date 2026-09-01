@@ -101,62 +101,10 @@
     padding:1.5rem 3.5vw;
     margin-bottom:1.25rem;
   }
-  .nav-contact{justify-self:end;}
-  /* play disc + label; the whole row is the click target */
-  .say{
-    display:inline-flex;
-    align-items:center;
-    gap:.65rem;
-    padding:0;
-    border:0;
-    background:none;
-    font-family:inherit;
-    color:var(--ink);
-    cursor:pointer;
-    justify-self:start;
-  }
-  .say-ico{
-    width:44px;height:44px;
-    flex:none;
-    border-radius:50%;
-    background:var(--ink);
-    color:var(--bg);
-    display:grid;
-    place-items:center;
-    box-shadow:0 2px 5px rgba(0,0,0,.18), 0 8px 20px rgba(0,0,0,.16);
-    transition:transform .2s ease, box-shadow .2s ease;
-  }
-  .say:hover .say-ico{
-    transform:scale(1.07);
-    box-shadow:0 3px 8px rgba(0,0,0,.22), 0 12px 28px rgba(0,0,0,.2);
-  }
-  .say:active .say-ico{transform:scale(.97);}
-  .say svg{
-    width:15px;height:15px;
-    fill:currentColor;
-    stroke:none;
-    /* a triangle looks off-centre when centred geometrically */
-    margin-left:2px;
-  }
-  .say-txt{
-    font-size:.85rem;
-    font-weight:500;
-    color:var(--muted);
-    white-space:nowrap;
-    transition:color .2s ease;
-  }
-  .say:hover .say-txt{color:var(--ink);}
-  .say.speaking .say-ico{animation:say-pulse 1s ease-in-out infinite;}
-  @keyframes say-pulse{
-    0%,100%{transform:scale(1);}
-    50%    {transform:scale(1.09);}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .say-ico{transition:none;}
-    .say.speaking .say-ico{animation:none;}
-  }
 
   .pills{
+    /* both side columns are empty now, so pin the pills to the centre one */
+    grid-column:2;
     display:flex;
     gap:.15rem;
     background:var(--glass);
@@ -199,13 +147,6 @@
   @media (prefers-reduced-motion:reduce){
     .pill-ind{transition:none;}
   }
-  .nav-contact{
-    font-size:.85rem;
-    font-weight:500;
-    color:var(--muted);
-    transition:color .2s ease;
-  }
-  .nav-contact:hover{color:var(--ink);}
 
   /* ---------------- bento grid ---------------- */
   .bento{
@@ -452,14 +393,6 @@
 <body>
 
 <nav>
-  <button class="say" id="sayBtn" type="button" aria-label="Say my name — hear how Rishov Mondal is pronounced">
-    <span class="say-ico">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M7.5 4.8v14.4L19.2 12 7.5 4.8Z"/>
-      </svg>
-    </span>
-    <span class="say-txt" id="sayTxt">Say my name</span>
-  </button>
   <div class="pills" role="group" aria-label="Filter cards">
     <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
     <button class="pill" data-filter="all" aria-pressed="true">All</button>
@@ -467,7 +400,6 @@
     <button class="pill" data-filter="work" aria-pressed="false">Work</button>
     <button class="pill" data-filter="education" aria-pressed="false">Education</button>
   </div>
-  <a class="nav-contact" href="mailto:rishov.mondal@iairo.ai">Contact</a>
 </nav>
 
 <div class="wrap">
@@ -803,64 +735,6 @@
         wrap.style.transform = '';
       }
     }, {passive:true});
-  })();
-
-  // ---- say my name ----
-  (function(){
-    var btn = document.getElementById('sayBtn');
-    if(!btn) return;
-    // A dead button is worse than no button.
-    if(!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined'){
-      btn.hidden = true;
-      return;
-    }
-
-    var voice = null;
-    function pickVoice(){
-      var vs = window.speechSynthesis.getVoices() || [];
-      if(!vs.length) return;
-      function byLang(l){
-        for(var i=0;i<vs.length;i++){ if(vs[i].lang && vs[i].lang.replace('_','-') === l) return vs[i]; }
-        return null;
-      }
-      // en-IN handles the vowels here far better than en-US
-      voice = byLang('en-IN') || byLang('bn-IN') || byLang('en-GB') || null;
-      if(!voice){
-        for(var i=0;i<vs.length;i++){ if(vs[i].lang && vs[i].lang.indexOf('en') === 0){ voice = vs[i]; break; } }
-      }
-    }
-    pickVoice();
-    // Chrome populates voices asynchronously
-    window.speechSynthesis.onvoiceschanged = pickVoice;
-
-    var txt = document.getElementById('sayTxt');
-    var IDLE_LABEL = txt ? txt.textContent : '';
-    var resetTimer = null;
-
-    function stop(){
-      clearTimeout(resetTimer);
-      btn.classList.remove('speaking');
-      if(txt) txt.textContent = IDLE_LABEL;
-    }
-
-    btn.addEventListener('click', function(){
-      window.speechSynthesis.cancel();
-      if(!voice) pickVoice();
-
-      var u = new SpeechSynthesisUtterance('Rishov Mondal');
-      if(voice) u.voice = voice;
-      u.lang = voice ? voice.lang : 'en-IN';
-      u.rate = 0.85;
-
-      btn.classList.add('speaking');
-      if(txt) txt.textContent = 'Rishov Mondal';
-      u.onend = stop;
-      u.onerror = stop;
-      // onend is unreliable across browsers, so guarantee the reset
-      resetTimer = setTimeout(stop, 5000);
-
-      window.speechSynthesis.speak(u);
-    });
   })();
 
   document.getElementById('yr').textContent = new Date().getFullYear();
