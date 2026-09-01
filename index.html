@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rishov Mondal</title>
-<meta name="description" content="Rishov Mondal — mathematician and researcher working on neurosymbolic AI and autoformalization.">
+<meta name="description" content="Rishov Mondal — mathematician and ML researcher working on neurosymbolic AI and autoformalization.">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rishov16.github.io/">
 <meta property="og:title" content="Rishov Mondal">
-<meta property="og:description" content="Mathematician and researcher working on neurosymbolic AI and autoformalization.">
+<meta property="og:description" content="Mathematician and ML researcher working on neurosymbolic AI and autoformalization.">
 <meta property="og:image" content="https://rishov16.github.io/avatar.png">
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,16 +66,20 @@
   .wrap{
     max-width:1180px;
     margin:0 auto;
-    padding:1.5rem clamp(1rem,3vw,2rem) 4rem;
+    padding:0 clamp(1rem,3vw,2rem) 4rem;
   }
 
   /* ---------------- nav ---------------- */
+  /* Full-bleed header: the logo and Contact sit against the viewport edges
+     while the card grid stays capped and centred, so they frame the grid
+     rather than lining up flush with it. */
   nav{
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:1rem;
-    margin-bottom:1.75rem;
+    padding:1.5rem 3.5vw;
+    margin-bottom:1.25rem;
     flex-wrap:wrap;
   }
   .logo{
@@ -234,6 +238,26 @@
     color:var(--pink-deep);
     flex:none;
     position:relative;
+    /* leans toward the cursor; the wiggle below lives on the <img> so the
+       two transforms never fight each other */
+    transition:transform .35s cubic-bezier(.2,.7,.3,1);
+    will-change:transform;
+  }
+  @keyframes memoji-wiggle{
+    0%   {transform:rotate(0)      translateY(0);}
+    18%  {transform:rotate(-10deg) translateY(-4px);}
+    36%  {transform:rotate(8deg)   translateY(0);}
+    54%  {transform:rotate(-6deg)  translateY(-2px);}
+    72%  {transform:rotate(4deg)   translateY(0);}
+    86%  {transform:rotate(-2deg)  translateY(0);}
+    100% {transform:rotate(0)      translateY(0);}
+  }
+  .avatar img.wiggling{
+    animation:memoji-wiggle .62s ease-in-out;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .avatar{transition:none;}
+    .avatar img.wiggling{animation:none;}
   }
   /* The memoji covers the RM monogram, which stays underneath as a fallback
      if the image ever fails to load. `contain` keeps the whole head in
@@ -370,19 +394,20 @@
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <nav>
-    <div class="logo">rishov</div>
-    <div class="pills" role="group" aria-label="Filter cards">
-      <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
-      <button class="pill" data-filter="all" aria-pressed="true">All</button>
-      <button class="pill" data-filter="about" aria-pressed="false">About</button>
-      <button class="pill" data-filter="work" aria-pressed="false">Work</button>
-      <button class="pill" data-filter="education" aria-pressed="false">Education</button>
-    </div>
-    <a class="nav-contact" href="mailto:rishov.mondal@iairo.ai">Contact</a>
-  </nav>
+<nav>
+  <div class="logo">rishov</div>
+  <div class="pills" role="group" aria-label="Filter cards">
+    <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
+    <button class="pill" data-filter="all" aria-pressed="true">All</button>
+    <button class="pill" data-filter="about" aria-pressed="false">About</button>
+    <button class="pill" data-filter="work" aria-pressed="false">Work</button>
+    <button class="pill" data-filter="education" aria-pressed="false">Education</button>
+  </div>
+  <a class="nav-contact" href="mailto:rishov.mondal@iairo.ai">Contact</a>
+</nav>
+
+<div class="wrap">
 
   <main class="bento">
 
@@ -392,7 +417,7 @@
         <!-- avatar.png: alohe/avatars (memo_34), MIT licence -->
         <div class="avatar">RM<img src="avatar.png" alt="Rishov Mondal" width="384" height="384" onerror="this.remove()"></div>
       </div>
-      <p class="blurb">I'm <span class="nm">Rishov</span>, a Mathematician and researcher working on neurosymbolic AI and autoformalization.</p>
+      <p class="blurb">I'm <span class="nm">Rishov</span>, a Mathematician and ML researcher working on neurosymbolic AI and autoformalization.</p>
     </div>
 
     <!-- map -->
@@ -658,6 +683,63 @@
   window.addEventListener('resize', moveIndicator);
   // web fonts change pill widths once they load
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(moveIndicator);
+
+  // ---- memoji reacts to the cursor coming near it ----
+  (function(){
+    var wrap = document.querySelector('.avatar');
+    var img  = wrap && wrap.querySelector('img');
+    if(!wrap || !img || reduce) return;
+
+    var RADIUS = 170;
+    var near = false;
+    var box = null;
+
+    // Cache the rect — reading it on every mousemove would force a layout
+    // on each pixel of travel.
+    function measure(){ box = wrap.getBoundingClientRect(); }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, {passive:true});
+
+    var clearTimer = null;
+    function stopWiggle(){
+      clearTimeout(clearTimer);
+      img.classList.remove('wiggling');
+    }
+    // animationend is the fast path, but it can fail to arrive (backgrounded
+    // tab, interrupted animation), so a timer guarantees the cleanup.
+    img.addEventListener('animationend', stopWiggle);
+
+    function wiggle(){
+      img.classList.remove('wiggling');
+      void img.offsetWidth;            // force a reflow so the animation restarts
+      img.classList.add('wiggling');
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(stopWiggle, 700);
+    }
+
+    window.addEventListener('mousemove', function(e){
+      if(!box) return;
+      var cx = box.left + box.width / 2;
+      var cy = box.top + box.height / 2;
+      var dx = e.clientX - cx;
+      var dy = e.clientY - cy;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(dist < RADIUS){
+        if(!near){
+          near = true;
+          wiggle();
+        }
+        var closeness = 1 - dist / RADIUS;              // 0 at the edge, 1 at the centre
+        var tilt = Math.max(-12, Math.min(12, (dx / RADIUS) * 16)) * closeness;
+        wrap.style.transform = 'scale(' + (1 + 0.1 * closeness).toFixed(3) + ') rotate(' + tilt.toFixed(2) + 'deg)';
+      } else if(near){
+        near = false;
+        wrap.style.transform = '';
+      }
+    }, {passive:true});
+  })();
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 </script>
