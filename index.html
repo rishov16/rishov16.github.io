@@ -33,6 +33,15 @@
     --mint-deep:#1d7a52;
     --cream:#fbeed3;
     --lilac:#d9d0f7;
+
+    /* translucent surfaces — the blurred blobs on body::before show through */
+    --glass:rgba(255,255,255,.55);
+    --glass-border:rgba(255,255,255,.7);
+    --pink-g:rgba(255,215,229,.55);
+    --blue-g:rgba(174,203,247,.55);
+    --mint-g:rgba(143,220,184,.55);
+    --cream-g:rgba(251,238,211,.58);
+    --lilac-g:rgba(217,208,247,.55);
   }
   :root[data-theme="dark"]{
     --bg:#111113;
@@ -50,6 +59,14 @@
     --mint-deep:#7fe0b2;
     --cream:#4a3f28;
     --lilac:#3b3358;
+
+    --glass:rgba(28,28,33,.55);
+    --glass-border:rgba(255,255,255,.10);
+    --pink-g:rgba(94,49,69,.55);
+    --blue-g:rgba(43,63,99,.55);
+    --mint-g:rgba(31,77,58,.55);
+    --cream-g:rgba(74,63,40,.55);
+    --lilac-g:rgba(59,51,88,.55);
   }
 
   *{box-sizing:border-box;}
@@ -62,6 +79,29 @@
     transition:background .3s ease, color .3s ease;
   }
   a{color:inherit;text-decoration:none;}
+
+  /* Soft colour field sitting behind everything. Without this there is
+     nothing for backdrop-filter to refract and the glass reads as flat. */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:-15%;
+    z-index:-1;
+    pointer-events:none;
+    background:
+      radial-gradient(30% 34% at 16% 20%, rgba(232,96,143,.40), transparent 68%),
+      radial-gradient(28% 32% at 84% 16%, rgba(63,111,208,.34), transparent 68%),
+      radial-gradient(32% 34% at 74% 76%, rgba(29,122,82,.32), transparent 68%),
+      radial-gradient(26% 30% at 24% 84%, rgba(150,120,240,.34), transparent 68%);
+    filter:blur(40px);
+  }
+  :root[data-theme="dark"] body::before{
+    background:
+      radial-gradient(30% 34% at 16% 20%, rgba(232,96,143,.26), transparent 68%),
+      radial-gradient(28% 32% at 84% 16%, rgba(63,111,208,.26), transparent 68%),
+      radial-gradient(32% 34% at 74% 76%, rgba(29,160,105,.20), transparent 68%),
+      radial-gradient(26% 30% at 24% 84%, rgba(150,120,240,.24), transparent 68%);
+  }
 
   .wrap{
     max-width:1180px;
@@ -107,7 +147,10 @@
   .pills{
     display:flex;
     gap:.15rem;
-    background:var(--card);
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid var(--glass-border);
     padding:.3rem;
     border-radius:999px;
     box-shadow:var(--shadow);
@@ -163,7 +206,10 @@
     gap:14px;
   }
   .card{
-    background:var(--card);
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid var(--glass-border);
     border-radius:30px;
     padding:1.5rem;
     box-shadow:var(--shadow);
@@ -283,11 +329,22 @@
   }
 
   /* ---------------- tinted cards ---------------- */
-  .t-pink{background:var(--pink);}
-  .t-blue{background:var(--blue);}
-  .t-mint{background:var(--mint);}
-  .t-cream{background:var(--cream);}
-  .t-lilac{background:var(--lilac);}
+  .t-pink{background:var(--pink-g);}
+  .t-blue{background:var(--blue-g);}
+  .t-mint{background:var(--mint-g);}
+  .t-cream{background:var(--cream-g);}
+  .t-lilac{background:var(--lilac-g);}
+
+  /* Without backdrop-filter the translucent fills would just look washed out
+     over the colour field, so fall back to the original solid surfaces. */
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .card,.pills{background:var(--card);}
+    .t-pink{background:var(--pink);}
+    .t-blue{background:var(--blue);}
+    .t-mint{background:var(--mint);}
+    .t-cream{background:var(--cream);}
+    .t-lilac{background:var(--lilac);}
+  }
   .t-pink .label,.t-blue .label,.t-mint .label,.t-cream .label,.t-lilac .label{color:rgba(0,0,0,.5);}
   :root[data-theme="dark"] .t-pink .label,
   :root[data-theme="dark"] .t-blue .label,
@@ -423,7 +480,7 @@
     <!-- map -->
     <div class="card map y2" data-cat="about">
       <svg viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice" aria-label="Map of Gift City, Gujarat">
-        <rect width="200" height="300" fill="var(--mint)"/>
+        <rect width="200" height="300" fill="var(--mint-g)"/>
         <rect x="12" y="18" width="58" height="46" rx="7" fill="rgba(255,255,255,.5)"/>
         <rect x="86" y="10" width="70" height="58" rx="7" fill="rgba(255,255,255,.35)"/>
         <rect x="20" y="96" width="46" height="66" rx="7" fill="rgba(255,255,255,.4)"/>
