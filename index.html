@@ -7,8 +7,25 @@
 <link rel="stylesheet" href="https://latex.vercel.app/style.css">
 <style>
   /* minimal additions on top of latex.css, kept in its spirit */
+
+  /* Widen the paper column for landscape screens: latex.css ships a
+     print-width 80ch body, which strands half a desktop viewport. */
+  body{
+    max-width: min(108ch, 94vw);
+    padding: 2.5rem clamp(1.25rem, 4vw, 3.5rem) 4rem;
+  }
+  /* ...but keep running prose at a comfortable measure inside it. */
+  .abstract{
+    max-width: 80ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .entry li{ max-width: 88ch; }
+
   .entry{ margin-bottom: 1.4rem; }
   .entry:last-child{ margin-bottom: 0; }
+  /* Role flush left, location flush right across the full column,
+     the way a LaTeX CV sets a tabular entry line. */
   .entry-line{
     display:flex;
     justify-content:space-between;
