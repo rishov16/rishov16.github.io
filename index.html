@@ -102,26 +102,44 @@
     margin-bottom:1.25rem;
   }
   .nav-contact{justify-self:end;}
-  /* Coordinates of Basirhat station stand in for a wordmark, so they are set
-     small and tracked out like a map label rather than a logotype. */
-  .logo{
-    font-family:'Inter',-apple-system,sans-serif;
-    font-weight:600;
-    font-size:.82rem;
-    letter-spacing:.07em;
-    line-height:1.3;
+  /* minimalist "hear my name" button */
+  .say{
+    width:38px;height:38px;
+    padding:0;
+    border-radius:50%;
+    border:1px solid var(--glass-border);
+    background:var(--glass);
+    box-shadow:var(--shadow);
     color:var(--ink);
-    font-variant-numeric:tabular-nums;
-    width:fit-content;
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+    justify-self:start;
+    transition:transform .2s ease, box-shadow .2s ease;
   }
-  .logo .place{
-    display:block;
-    font-weight:500;
-    font-size:.68rem;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin-top:.15rem;
+  .say:hover{
+    transform:translateY(-2px);
+    box-shadow:0 2px 4px rgba(0,0,0,.05), 0 10px 22px rgba(0,0,0,.08);
+  }
+  .say svg{
+    width:19px;height:19px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .say svg .cone{fill:currentColor;stroke:none;}
+  .say .wave{opacity:.9;transform-origin:8px 12px;}
+  .say.speaking .w1{animation:say-pulse .9s ease-in-out infinite;}
+  .say.speaking .w2{animation:say-pulse .9s ease-in-out .15s infinite;}
+  @keyframes say-pulse{
+    0%,100%{opacity:.25;}
+    50%    {opacity:1;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .say{transition:none;}
+    .say.speaking .w1,.say.speaking .w2{animation:none;}
   }
 
   .pills{
@@ -420,10 +438,13 @@
 <body>
 
 <nav>
-  <div class="logo" aria-label="Basirhat station, West Bengal">
-    22.6502&deg; N, 88.8693&deg; E
-    <span class="place">Basirhat, West Bengal</span>
-  </div>
+  <button class="say" id="sayBtn" type="button" title="Hear my name" aria-label="Hear how Rishov Mondal is pronounced">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path class="cone" d="M11 5 6.5 9H3.5v6h3L11 19V5Z"/>
+      <path class="wave w1" d="M14.8 9.4a3.6 3.6 0 0 1 0 5.2"/>
+      <path class="wave w2" d="M17.6 6.6a7.5 7.5 0 0 1 0 10.8"/>
+    </svg>
+  </button>
   <div class="pills" role="group" aria-label="Filter cards">
     <span class="pill-ind" id="pillInd" aria-hidden="true"></span>
     <button class="pill" data-filter="all" aria-pressed="true">All</button>
@@ -767,6 +788,59 @@
         wrap.style.transform = '';
       }
     }, {passive:true});
+  })();
+
+  // ---- say my name ----
+  (function(){
+    var btn = document.getElementById('sayBtn');
+    if(!btn) return;
+    // A dead button is worse than no button.
+    if(!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined'){
+      btn.hidden = true;
+      return;
+    }
+
+    var voice = null;
+    function pickVoice(){
+      var vs = window.speechSynthesis.getVoices() || [];
+      if(!vs.length) return;
+      function byLang(l){
+        for(var i=0;i<vs.length;i++){ if(vs[i].lang && vs[i].lang.replace('_','-') === l) return vs[i]; }
+        return null;
+      }
+      // en-IN handles the vowels here far better than en-US
+      voice = byLang('en-IN') || byLang('bn-IN') || byLang('en-GB') || null;
+      if(!voice){
+        for(var i=0;i<vs.length;i++){ if(vs[i].lang && vs[i].lang.indexOf('en') === 0){ voice = vs[i]; break; } }
+      }
+    }
+    pickVoice();
+    // Chrome populates voices asynchronously
+    window.speechSynthesis.onvoiceschanged = pickVoice;
+
+    var resetTimer = null;
+    function stop(){
+      clearTimeout(resetTimer);
+      btn.classList.remove('speaking');
+    }
+
+    btn.addEventListener('click', function(){
+      window.speechSynthesis.cancel();
+      if(!voice) pickVoice();
+
+      var u = new SpeechSynthesisUtterance('Rishov Mondal');
+      if(voice) u.voice = voice;
+      u.lang = voice ? voice.lang : 'en-IN';
+      u.rate = 0.85;
+
+      btn.classList.add('speaking');
+      u.onend = stop;
+      u.onerror = stop;
+      // onend is unreliable across browsers, so guarantee the reset
+      resetTimer = setTimeout(stop, 5000);
+
+      window.speechSynthesis.speak(u);
+    });
   })();
 
   document.getElementById('yr').textContent = new Date().getFullYear();
