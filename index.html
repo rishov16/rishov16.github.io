@@ -103,29 +103,32 @@
   }
   .nav-contact{justify-self:end;}
   /* minimalist "hear my name" button */
+  /* same circle token as the card arrows: borderless tint that inverts to
+     ink on hover, so it reads as part of that icon family */
   .say{
-    width:38px;height:38px;
+    width:34px;height:34px;
     padding:0;
+    border:0;
     border-radius:50%;
-    border:1px solid var(--glass-border);
-    background:var(--glass);
-    box-shadow:var(--shadow);
+    background:rgba(0,0,0,.06);
     color:var(--ink);
     display:grid;
     place-items:center;
     cursor:pointer;
     justify-self:start;
-    transition:transform .2s ease, box-shadow .2s ease;
+    transition:background .2s ease, color .2s ease, transform .2s ease;
   }
+  :root[data-theme="dark"] .say{background:rgba(255,255,255,.12);}
   .say:hover{
-    transform:translateY(-2px);
-    box-shadow:0 2px 4px rgba(0,0,0,.05), 0 10px 22px rgba(0,0,0,.08);
+    background:var(--ink);
+    color:var(--bg);
+    transform:scale(1.06);
   }
   .say svg{
-    width:19px;height:19px;
+    width:17px;height:17px;
     fill:none;
     stroke:currentColor;
-    stroke-width:1.8;
+    stroke-width:2;
     stroke-linecap:round;
     stroke-linejoin:round;
   }
